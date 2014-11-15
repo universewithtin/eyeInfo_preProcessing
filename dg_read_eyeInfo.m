@@ -1,4 +1,4 @@
-function eyeInfo = dg_read_eyeInfo(dfzFilePath)
+function [eyeInfo, experimentInfo] = dg_read_eyeInfo(dfzFilePath)
 % eyeInfo = dg_read_eyeInfo(dfzFilePath)
 %
 %
@@ -31,41 +31,70 @@ function eyeInfo = dg_read_eyeInfo(dfzFilePath)
 %   modification:
 %       $ 201?
 
-
+%% 
+preStimFicationPeriod = 300;
+%%
 rawData = dg_read(dfzFilePath);
 n.MixedTrials = numel(rawData.ems); 
 % mixed trials refer to combination of correct and faild trials
 
 
 correctTrialCounter = 0;
+phyA_trialCounter = 0;
+bfs_trialCounter = 0;
+
 for iMixTr = 1 : n.MixedTrials
     tmp_logicalIndex = (rawData.e_types{iMixTr} == 42);
-    if sum(tmp_logicalIndex) > 1
-        % if we had code number 42 means it was a correct trials 
+    if sum(tmp_logicalIndex) > 0
+        % if we had code number 42 (reward) means it was a correct trial as the
+        % subject got the reward
         correctTrialCounter = correctTrialCounter + 1;
+        correctTrialsIndices(correctTrialCounter) = iMixTr;
         %% extract eye info
         % time series
-        eyeInfo.XcoordinateTimeSeries = rawData.ems{iMixTr}{2}; % X
-        eyeInfo.YcoordinateTimeSeries = rawData.ems{iMixTr}{3}; % Y
-        eyeInfo.pupilSizeTimeSeries = rawData.ems{iMixTr}{5}; % PD
+        eyeInfo.XcoordinateTimeSeries{correctTrialCounter} = rawData.ems{iMixTr}{2}; % X
+        eyeInfo.YcoordinateTimeSeries{correctTrialCounter} = rawData.ems{iMixTr}{3}; % Y
+        eyeInfo.pupilSizeTimeSeries{correctTrialCounter} = rawData.ems{iMixTr}{5}; % PD
         
         % times
-        eyeInfo.times.spotON = 
+%         eyeInfo.times.spotON(correctTrialCounter) = ...
+%             rawData.e_times{iMixTr}(rawData.e_types{iMixTr} == 25);
+        tmp_patternOnIndex = find(rawData.e_types{iMixTr} == 28);
+        eyeInfo.times.stimON(correctTrialCounter) = rawData.e_times{iMixTr}(tmp_patternOnIndex(1));
+        eyeInfo.times.maskON(correctTrialCounter) = rawData.e_times{iMixTr}(tmp_patternOnIndex(2));
+        eyeInfo.times.maskOFF(correctTrialCounter) = rawData.e_times{iMixTr}(tmp_patternOnIndex(3));
+%         eyeInfo.times.stimON{correctTrialCounter} = ...
+%             rawData.e_times{iMixTr}(rawData.e_types{iMixTr} == 28);
+%     eyeInfo.times.spotON{correctTrialCounter} = ...
+%             eyeInfo.times.stimON - preStimFicationPeriod;  
+
+        % condition
+        if  rawData.e_params{iMixTr}{6}(4)
+            phyA_trialCounter = phyA_trialCounter + 1;
+            experimentInfo.condition.physicalAlternation(phyA_trialCounter) = correctTrialCounter;
+        else
+            bfs_trialCounter = bfs_trialCounter + 1;
+            experimentInfo.condition.bfs(bfs_trialCounter) = correctTrialCounter;
+        end
     end
 end
 
-n.Trials = correctTrialCounter;
+experimentInfo.n.Trials = correctTrialCounter;
+experimentInfo.n.physicalAlternation = phyA_trialCounter;
+experimentInfo.n.bfs = bfs_trialCounter;
 
-
+%%
+%  iMixTr = 183
+% [rawData.e_times{iMixTr} rawData.e_types{iMixTr} rawData.e_subtypes{iMixTr}]
+%         tmp_patternOnIndex = find(rawData.e_types{iMixTr} == 28);
+%         eyeInfo.times.stimON = rawData.e_times{iMixTr}(tmp_patternOnIndex(1));
+%         eyeInfo.times.maskON = rawData.e_times{iMixTr}(tmp_patternOnIndex(2));
+%         eyeInfo.times.maskOFF = rawData.e_times{iMixTr}(tmp_patternOnIndex(3));
+%         eyeInfo.times.maskOFF - eyeInfo.times.maskON
 %% algorithm 
 % for i = 1:length(data.e_types)
 
 %     if find(data.e_types{i}==42)        
-%         get fix spot on time (25)
-%         
-%         calculate fixation on time (stim on(28) - 300)
-%         
-%         get stim on time (first 28)
 %         
 %         get mask on time (second 28)
 %         
