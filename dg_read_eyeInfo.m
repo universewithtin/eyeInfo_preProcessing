@@ -27,20 +27,20 @@ function [eyeInfo, experimentInfo] = dg_read_eyeInfo(dfzFilePath)
 % e.g. X/YcoordinateTimeSeries?
 % ------
 % Code Info:
-%   creation: 2014-11-11 by ShS -> shervin.safavi@gmail.com
+%   creation: 2014-11-11 by ShS (shervin.safavi@gmail.com) and Vishal Kapoor 
 %   modification:
-%       $ 201?
+%       $ 2014-11-29 add fixation time in the output structure 
+%       $ 2014-12-20 add stim info  in the output structure 
 
 %% 
-preStimFicationPeriod = 300;
+preStimFixationPeriod = 300; % in ms
 %%
 rawData = dg_read(dfzFilePath);
 n.MixedTrials = numel(rawData.ems); 
-% mixed trials refer to combination of correct and faild trials
-
+% mixed trials refer to combination of correct/successful and faild trials
 
 correctTrialCounter = 0;
-phyA_trialCounter = 0;
+pa_trialCounter = 0;
 bfs_trialCounter = 0;
 
 for iMixTr = 1 : n.MixedTrials
@@ -50,6 +50,7 @@ for iMixTr = 1 : n.MixedTrials
         % subject got the reward
         correctTrialCounter = correctTrialCounter + 1;
         correctTrialsIndices(correctTrialCounter) = iMixTr;
+
         %% extract eye info
         % time series
         eyeInfo.XcoordinateTimeSeries{correctTrialCounter} = rawData.ems{iMixTr}{2}; % X
@@ -60,6 +61,7 @@ for iMixTr = 1 : n.MixedTrials
 %         eyeInfo.times.spotON(correctTrialCounter) = ...
 %             rawData.e_times{iMixTr}(rawData.e_types{iMixTr} == 25);
         tmp_patternOnIndex = find(rawData.e_types{iMixTr} == 28);
+        eyeInfo.times.fixStart(correctTrialCounter) = rawData.e_times{iMixTr}(tmp_patternOnIndex(1)) - preStimFixationPeriod;
         eyeInfo.times.stimON(correctTrialCounter) = rawData.e_times{iMixTr}(tmp_patternOnIndex(1));
         eyeInfo.times.maskON(correctTrialCounter) = rawData.e_times{iMixTr}(tmp_patternOnIndex(2));
         eyeInfo.times.maskOFF(correctTrialCounter) = rawData.e_times{iMixTr}(tmp_patternOnIndex(3));
@@ -68,10 +70,13 @@ for iMixTr = 1 : n.MixedTrials
 %     eyeInfo.times.spotON{correctTrialCounter} = ...
 %             eyeInfo.times.stimON - preStimFicationPeriod;  
 
+        % stim type (e.g. orientation of grating)
+        experimentInfo.stimInfo(iMixTr) = rawData.e_params{iMixTr}{6}(1);
+                
         % condition
         if  rawData.e_params{iMixTr}{6}(4)
-            phyA_trialCounter = phyA_trialCounter + 1;
-            experimentInfo.condition.physicalAlternation(phyA_trialCounter) = correctTrialCounter;
+            pa_trialCounter = pa_trialCounter + 1;
+            experimentInfo.condition.physicalAlternation(pa_trialCounter) = correctTrialCounter;
         else
             bfs_trialCounter = bfs_trialCounter + 1;
             experimentInfo.condition.bfs(bfs_trialCounter) = correctTrialCounter;
@@ -80,7 +85,7 @@ for iMixTr = 1 : n.MixedTrials
 end
 
 experimentInfo.n.Trials = correctTrialCounter;
-experimentInfo.n.physicalAlternation = phyA_trialCounter;
+experimentInfo.n.physicalAlternation = pa_trialCounter;
 experimentInfo.n.bfs = bfs_trialCounter;
 
 %%
@@ -91,74 +96,6 @@ experimentInfo.n.bfs = bfs_trialCounter;
 %         eyeInfo.times.maskON = rawData.e_times{iMixTr}(tmp_patternOnIndex(2));
 %         eyeInfo.times.maskOFF = rawData.e_times{iMixTr}(tmp_patternOnIndex(3));
 %         eyeInfo.times.maskOFF - eyeInfo.times.maskON
-%% algorithm 
-% for i = 1:length(data.e_types)
-
-%     if find(data.e_types{i}==42)        
-%         
-%         get mask on time (second 28)
-%         
-%         get mask off time (last 28)
-%         
-%         get fix off time
-%         
-%         
-%         
-%     end
-%     
-%     
-%     
-% end
-% 
-% 
-% 
-% averages
-% 
-% plot    - relative to stim on
-% 
-% - relative to mask on
-% 
-% - relative to fixation on
-% 
-% 
-% 
-% remove 1-2 seconds of the data after mask on
-% 
-% 
-% 
-% go until the end of the trials
-% 
-% 
-% 
-% represent each trace by the z score
-% 
-% find every instance when the z score changes by 1 std
-% 
-% detect it as an event
-% 
-% for both physical alternation and flash suppresion trials
-%     
-%     
-%     
-%     plot the interevent distributions.
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     
-%     0 (polar)  70 (contrast)  0 (in which eye,0 left, 1 right)    0 (flash, 1 physical)    70 (contrast)
-%     
-%     
-%     
-%     [data.e_params{530}{6} data.e_params{531}{6} data.e_params{532}{6} data.e_params{533}{6} data.e_params{534}{6}]
-% end
-% 
-
-%% draft
 
 
 
