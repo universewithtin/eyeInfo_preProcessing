@@ -1,0 +1,23 @@
+%% load the datasets
+dataPath = 'L:/projects/shervin/data/QNXdataFiles/H07/BFS_iViewData/Hayo_20150211_bfsgrad_deg_45_CONTRAST90.dgz';
+[eyeInfo, experimentInfo] = dg_read_eyeInfo(dataPath);
+
+for iTr = 1 : experimentInfo.n.Trials
+    fixON = round(eyeInfo.times.fixStart(iTr)/5);
+    maskOFF = round(eyeInfo.times.maskOFF(iTr)/5);
+    tmpPD = eyeInfo.pupilSizeTimeSeries{iTr}(fixON : maskOFF);
+    tmpECX = eyeInfo.XcoordinateTimeSeries{iTr}(fixON : maskOFF);
+    tmpECY = eyeInfo.YcoordinateTimeSeries{iTr}(fixON : maskOFF);
+    
+    PDlength(iTr) = numel(tmpPD);
+    ECXlength(iTr) = numel(tmpECX);
+    ECXlength(iTr) = numel(tmpECY);
+    
+    rawPDlength(iTr) = numel(eyeInfo.pupilSizeTimeSeries{iTr});
+    rawECXlength(iTr) = numel(eyeInfo.XcoordinateTimeSeries{iTr});
+    rawECXlength(iTr) = numel(eyeInfo.pupilSizeTimeSeries{iTr});
+end
+
+
+plot(ECXlength*5, ECYlength*5, '.')
+
